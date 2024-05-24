@@ -17,5 +17,7 @@ public class MusicPlayer
             AgWindow.draw();
             AgWindow.endLoop();
         }
+        
+        System.exit(0); // Fix JavaFX keeping the application open
     }
 }
