@@ -8,6 +8,7 @@ public class MusicPlayer
     public static void main(String[] args)
     {
         AgWindow.create("", 500, 500, true);
+        AgWindow.setIcon("appu26j/musicplayer/assets/icon.png");
         AgWindow.setBackgroundColor(235, 245, 250, 255);
         AgWindow.displayScreen(new HomeScreen());
         

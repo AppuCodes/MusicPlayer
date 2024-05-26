@@ -6,12 +6,14 @@ import static org.lwjgl.opengl.GL11.*;
 import java.awt.Color;
 import java.io.File;
 
+import appu26j.aguiu.AgWindow;
 import appu26j.aguiu.gui.GuiScreen;
-import appu26j.musicplayer.utils.*;
+import appu26j.musicplayer.utils.AudioUtil;
 import javafx.util.Duration;
 
 public class PlayScreen extends GuiScreen
 {
+    private boolean volumePopUp = false, draggingVolumeSlider = false, draggingPlaybackSlider = false;
     private File music;
     
     public PlayScreen(File music)
@@ -47,11 +49,56 @@ public class PlayScreen extends GuiScreen
         String currentDuration = AudioUtil.hasFinished() ? endDuration : ((int) currentTime.toMinutes() + ":" + (((int) currentTime.toSeconds() % 60) < 10 ? "0" + ((int) currentTime.toSeconds() % 60) : ((int) currentTime.toSeconds() % 60)));
         smallText.drawString(currentDuration + " / " + endDuration, 16, height - 165, Color.DARK_GRAY);
         drawArrows(true, cursorX, cursorY, width, height);
+        drawStopButton(true, cursorX, cursorY, width, height);
+        drawVolumeButton(true, cursorX, cursorY, width, height);
+        
+        if (volumePopUp)
+        {
+            float w = width / 2;
+            drawRect(w + 125, height - 250, w + 165, height - 90, new Color(235, 245, 250, ICIB(cursorX, cursorY, w + 125, height - 250, w + 165, height - 90) ? 125 : 75));
+            progress = (float) AudioUtil.getVolume();
+            drawGradient(w + 141, height - (100 + (140 * progress)), w + 149, height - 100, new Color(0, 128, 255), new Color(0, 128, 255).darker());
+            smallText.drawString((int) (progress * 100) + "%", w + 175, height - (122 + (128 * progress)), Color.DARK_GRAY);
+            
+            if (draggingVolumeSlider)
+            {
+                progress = clamp(0, 1, (1 - ((cursorY - (height - 240)) / 140)));
+                AudioUtil.changeVolume(progress);
+            }
+        }
+        
+        if (draggingPlaybackSlider)
+        {
+            progress = clamp(0, 1, (cursorX - 16) / (width - 32));
+            AudioUtil.changePosition(stopTime.multiply(progress));
+        }
     }
     
     @Override
     public void mouseClicked(int button, float cursorX, float cursorY)
     {
+        boolean madeFalse = false;
+        float w = width / 2;
+        
+        if (volumePopUp)
+        {
+            if (ICIB(cursorX, cursorY, w + 125, height - 250, w + 165, height - 90))
+            {
+                draggingVolumeSlider = true;
+            }
+            
+            else
+            {
+                volumePopUp = false;
+                madeFalse = true;
+            }
+        }
+        
+        if (!volumePopUp && ICIB(cursorX, cursorY, 0, height - 137, width, height - 100))
+        {
+            draggingPlaybackSlider = true;
+        }
+        
         if (button == 0)
         {
             if (hoveringPlayButton(cursorX, cursorY, width, height))
@@ -67,17 +114,106 @@ public class PlayScreen extends GuiScreen
                 }
             }
             
+            else if (hoveringRightButton(cursorX, cursorY, width, height))
+            {
+                Duration currentTime = AudioUtil.getCurrentTime(), position = currentTime.add(Duration.seconds(5));
+                AudioUtil.changePosition(position);
+            }
+            
             else if (hoveringLeftButton(cursorX, cursorY, width, height))
             {
                 Duration currentTime = AudioUtil.getCurrentTime(), position = currentTime.subtract(Duration.seconds(5));
                 AudioUtil.changePosition(position);
             }
             
-            else if (hoveringRightButton(cursorX, cursorY, width, height))
+            else if (hoveringStopButton(cursorX, cursorY, width, height))
             {
-                Duration currentTime = AudioUtil.getCurrentTime(), position = currentTime.add(Duration.seconds(5));
-                AudioUtil.changePosition(position);
+                AudioUtil.stop();
+                AgWindow.displayScreen(new HomeScreen());
+            }
+            
+            else if (!madeFalse && hoveringVolumeButton(cursorX, cursorY, width, height))
+            {
+                volumePopUp = true;
             }
         }
+    }
+    
+    @Override
+    public void mouseReleased(int button, float cursorX, float cursorY)
+    {
+        if (draggingVolumeSlider)
+        {
+            draggingVolumeSlider = false;
+        }
+        
+        if (draggingPlaybackSlider)
+        {
+            draggingPlaybackSlider = false;
+        }
+    }
+    
+    @Override
+    public void keyPressed(int key)
+    {
+        if (key == 256) // ESC Key
+        {
+            if (volumePopUp)
+            {
+                volumePopUp = false;
+            }
+            
+            else
+            {
+                AudioUtil.stop();
+                AgWindow.displayScreen(new HomeScreen());
+            }
+        }
+        
+        else if (key == 32) // Space Key
+        {
+            if (AudioUtil.isPlaying())
+            {
+                AudioUtil.pause();
+            }
+            
+            else
+            {
+                AudioUtil.resume();
+            }
+        }
+        
+        else if (key == 262) // Right Arrow
+        {
+            Duration currentTime = AudioUtil.getCurrentTime(), position = currentTime.add(Duration.seconds(5));
+            AudioUtil.changePosition(position);
+        }
+        
+        else if (key == 263) // Left Arrow
+        {
+            Duration currentTime = AudioUtil.getCurrentTime(), position = currentTime.subtract(Duration.seconds(5));
+            AudioUtil.changePosition(position);
+        }
+        
+        else if (key == 264) // Down Arrow
+        {
+            volumePopUp = true;
+            double volume = AudioUtil.getVolume() - 0.1;
+            volume = volume < 0 ? 0 : volume;
+            AudioUtil.changeVolume(volume);
+        }
+        
+        else if (key == 265) // Up Arrow
+        {
+            volumePopUp = true;
+            double volume = AudioUtil.getVolume() + 0.1;
+            volume = volume > 1 ? 1 : volume;
+            AudioUtil.changeVolume(volume);
+        }
+    }
+    
+    private float clamp(float minimum, float maximum, float value)
+    {
+        return value < minimum ? minimum : value > maximum ? maximum : value;
     }
 }

@@ -11,6 +11,7 @@ public class AudioUtil
     public static File DIRECTORY = new File(System.getProperty("user.home"));
     private static boolean playing = false, finished = false;
     private static File previousMusicFile = null;
+    private static double previousVolume = 1;
     private static MediaPlayer mediaPlayer;
     
     static
@@ -29,15 +30,17 @@ public class AudioUtil
     {
         Media media = new Media(file.toURI().toString());
         mediaPlayer = new MediaPlayer(media);
+        mediaPlayer.setVolume(previousVolume);
         previousMusicFile = file;
         mediaPlayer.play();
+        finished = false;
         playing = true;
         
         new Thread(() ->
         {
             while (true)
             {
-                if ((getStopTime().toSeconds() - getCurrentTime().toSeconds()) < 0.5)
+                if (getStopTime().subtract(getCurrentTime()).toSeconds() < 0.5)
                 {
                     stop();
                     break;
@@ -82,19 +85,33 @@ public class AudioUtil
     
     public static void changePosition(Duration time)
     {
-        pause();
-        
-        try
+        if (Math.abs(getCurrentTime().subtract(time).toSeconds()) > 1)
         {
-            Thread.sleep(5);
+            pause();
+            
+            try
+            {
+                Thread.sleep(5);
+            }
+            
+            catch (Exception e)
+            {
+            }
+            
+            mediaPlayer.setStartTime(time);
+            resume();
         }
-        
-        catch (Exception e)
-        {
-        }
-        
-        mediaPlayer.setStartTime(time);
-        resume();
+    }
+    
+    public static void changeVolume(double volume)
+    {
+        mediaPlayer.setVolume(volume);
+        previousVolume = volume;
+    }
+    
+    public static double getVolume()
+    {
+        return mediaPlayer.getVolume();
     }
     
     public static Duration getCurrentTime()
@@ -109,7 +126,7 @@ public class AudioUtil
     
     public static boolean isMusic(File file)
     {
-        return file.getName().endsWith(".mp3") || file.getName().endsWith(".wav") || file.getName().endsWith(".ogg");
+        return file.getName().endsWith(".mp3") || file.getName().endsWith(".wav") || file.getName().endsWith(".ogg") || file.getName().endsWith(".aac") || file.getName().endsWith(".aiff");
     }
     
     public static boolean isPlaying()
