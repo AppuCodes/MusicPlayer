@@ -1,9 +1,18 @@
 package appu26j.musicplayer.gui;
 
-import static appu26j.musicplayer.utils.RenderUtil.*;
-import static org.lwjgl.opengl.GL11.*;
+import static appu26j.musicplayer.utils.RenderUtil.bigText;
+import static appu26j.musicplayer.utils.RenderUtil.drawArrows;
+import static appu26j.musicplayer.utils.RenderUtil.drawPlayButton;
+import static appu26j.musicplayer.utils.RenderUtil.drawStopButton;
+import static appu26j.musicplayer.utils.RenderUtil.drawVolumeButton;
+import static appu26j.musicplayer.utils.RenderUtil.mediumText;
+import static appu26j.musicplayer.utils.RenderUtil.smallText;
+import static org.lwjgl.opengl.GL11.GL_SCISSOR_TEST;
+import static org.lwjgl.opengl.GL11.glDisable;
+import static org.lwjgl.opengl.GL11.glEnable;
 
-import java.awt.*;
+import java.awt.Color;
+import java.awt.GraphicsEnvironment;
 import java.io.File;
 
 import org.lwjgl.PointerBuffer;
@@ -12,7 +21,9 @@ import org.lwjgl.util.nfd.NativeFileDialog;
 
 import appu26j.aguiu.AgWindow;
 import appu26j.aguiu.gui.GuiScreen;
-import appu26j.musicplayer.utils.*;
+import appu26j.musicplayer.MusicPlayer;
+import appu26j.musicplayer.utils.AudioUtil;
+import appu26j.musicplayer.utils.RenderUtil;
 
 public class HomeScreen extends GuiScreen
 {
@@ -32,7 +43,7 @@ public class HomeScreen extends GuiScreen
             mouseScrolled(0, 0.25 / (refreshRate / 60D));
         }
         
-        bigText.drawString("Welcome", 12, 0, Color.BLACK);
+        bigText.drawString("Welcome", 12, 0, MusicPlayer.DARK_MODE != null ? Color.WHITE : Color.BLACK);
         float maxWidth = width - 48;
         int offset = -scroll;
         glEnable(GL_SCISSOR_TEST);
@@ -43,7 +54,7 @@ public class HomeScreen extends GuiScreen
         {
             if (AudioUtil.isMusic(file))
             {
-                String name = file.getName(), extension = name.substring(name.indexOf("."));
+                String name = file.getName(), extension = name.substring(name.lastIndexOf("."));
                 float textWidth = mediumText.getWidth(name) + 48;
                 
                 if (textWidth > maxWidth)
@@ -59,7 +70,7 @@ public class HomeScreen extends GuiScreen
                 drawRect(48, 120 + offset, maxWidth, 180 + offset, new Color(0, 128, 255, ICIB(cursorX, cursorY, 48, 120 + offset, maxWidth, 180 + offset) ? 50 : 25));
                 drawGradient(56, 133 + offset, 113, 164 + offset, Color.MAGENTA, Color.MAGENTA.darker());
                 smallText.drawString(extension.substring(1), 85 - (smallText.getWidth(extension.substring(1)) / 2), 130 + offset, Color.WHITE);
-                mediumText.drawString(name.replace(extension, ""), 123, 120 + offset, Color.DARK_GRAY);
+                mediumText.drawString(name.replace(extension, ""), 123, 120 + offset, MusicPlayer.DARK_MODE != null ? Color.LIGHT_GRAY : Color.DARK_GRAY);
                 offset += 60;
             }
         }
@@ -69,24 +80,24 @@ public class HomeScreen extends GuiScreen
         if (offset != 0)
         {
             float x = smallText.getWidth("You may click one to play or choose") + 48, textWidth = smallText.getWidth("here");
-            smallText.drawString("You may click one to play or choose", 48, 64, Color.BLACK);
-            smallText.drawString("here", 436, 64, Color.BLUE);
+            smallText.drawString("You may click one to play or choose", 48, 64, MusicPlayer.DARK_MODE != null ? Color.WHITE : Color.BLACK);
+            smallText.drawString("here", 436, 64, MusicPlayer.DARK_MODE != null ? Color.CYAN : Color.BLUE);
             
             if (ICIB(cursorX, cursorY, x, 65, x + textWidth + 15, 100))
             {
-                drawRect(x + 7, 94, x + textWidth + 7, 96, Color.BLUE);
+                drawRect(x + 7, 94, x + textWidth + 7, 96, MusicPlayer.DARK_MODE != null ? Color.CYAN : Color.BLUE);
             }
         }
         
         else
         {
             float x = smallText.getWidth("You may choose one to play") + 48, textWidth = smallText.getWidth("here");
-            smallText.drawString("You may choose one to play", 48, 64, Color.BLACK);
-            smallText.drawString("here", 355, 64, Color.BLUE);
+            smallText.drawString("You may choose one to play", 48, 64, MusicPlayer.DARK_MODE != null ? Color.WHITE : Color.BLACK);
+            smallText.drawString("here", 355, 64, MusicPlayer.DARK_MODE != null ? Color.CYAN : Color.BLUE);
             
             if (ICIB(cursorX, cursorY, x, 65, x + textWidth + 15, 100))
             {
-                drawRect(x + 7, 94, x + textWidth + 7, 96, Color.BLUE);
+                drawRect(x + 7, 94, x + textWidth + 7, 96, MusicPlayer.DARK_MODE != null ? Color.CYAN : Color.BLUE);
             }
         }
         

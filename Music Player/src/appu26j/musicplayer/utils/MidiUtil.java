@@ -2,58 +2,45 @@ package appu26j.musicplayer.utils;
 
 import java.io.File;
 
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.media.*;
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Sequence;
+import javax.sound.midi.Sequencer;
+
 import javafx.util.Duration;
 
-public class AudioUtil
+public class MidiUtil
 {
-    public static File DIRECTORY = new File(System.getProperty("user.home"));
     private static boolean playing = false, finished = false;
     private static File previousMusicFile = null;
     private static double previousVolume = 1;
-    private static MediaPlayer mediaPlayer;
-    
-    static
-    {
-        File musicFolder = new File(DIRECTORY, "Music");
-        
-        if (musicFolder.exists())
-        {
-            DIRECTORY = musicFolder;
-        }
-        
-        new JFXPanel();
-    }
+    private static Sequencer sequencer;
     
     public static void play(File file)
     {
-        Media media = new Media(file.toURI().toString());
-        mediaPlayer = new MediaPlayer(media);
-        mediaPlayer.setVolume(previousVolume);
+        try
+        {
+            Sequence sequence = MidiSystem.getSequence(file);
+            
+            if (sequencer == null)
+            {
+                sequencer = MidiSystem.getSequencer();
+                sequencer.open();
+            }
+            
+            sequencer.setSequence(sequence);
+            sequencer.start();
+        } catch (Exception e) { e.printStackTrace(); }
+        
         previousMusicFile = file;
-        mediaPlayer.play();
         finished = false;
         playing = true;
-        
-        new Thread(() ->
-        {
-            while (true)
-            {
-                if (getStopTime().subtract(getCurrentTime()).toSeconds() < 0.5)
-                {
-                    stop();
-                    break;
-                }
-            }
-        }).start();
     }
     
     public static void pause()
     {
         if (playing)
         {
-            mediaPlayer.pause();
+            sequencer.stop();
             playing = false;
         }
     }
@@ -68,7 +55,7 @@ public class AudioUtil
         
         else if (!playing)
         {
-            mediaPlayer.play();
+            sequencer.start();
             playing = true;
         }
     }
@@ -77,7 +64,7 @@ public class AudioUtil
     {
         if (playing)
         {
-            mediaPlayer.stop();
+            sequencer.stop();
             playing = false;
             finished = true;
         }
@@ -98,35 +85,36 @@ public class AudioUtil
             {
             }
             
-            mediaPlayer.setStartTime(time);
+            sequencer.setMicrosecondPosition((long) (time.toMillis() * 1000L));
             resume();
         }
     }
     
     public static void changeVolume(double volume)
     {
-        mediaPlayer.setVolume(volume);
+//        for (MidiChannel channel : synthesizer.getChannels())
+//            channel.controlChange(7, (int) (volume * 127));
         previousVolume = volume;
     }
     
     public static double getVolume()
     {
-        return mediaPlayer.getVolume();
+        return previousVolume;
     }
     
     public static Duration getCurrentTime()
     {
-        return mediaPlayer.getCurrentTime();
+        return Duration.millis(sequencer.getMicrosecondPosition() / 1000L);
     }
     
     public static Duration getStopTime()
     {
-        return mediaPlayer.getStopTime();
+        return Duration.millis(sequencer.getMicrosecondLength() / 1000L);
     }
     
     public static boolean isMusic(File file)
     {
-        return file.getName().endsWith(".mp3") || file.getName().endsWith(".wav") || file.getName().endsWith(".ogg") || file.getName().endsWith(".aac") || file.getName().endsWith(".aiff");
+        return file.getName().endsWith(".mid") || file.getName().endsWith(".midi");
     }
     
     public static boolean isPlaying()

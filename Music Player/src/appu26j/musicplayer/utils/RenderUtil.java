@@ -68,7 +68,6 @@ public class RenderUtil extends GuiScreen
         /**
          * Left
          */
-        
         if (enabled)
         {
             drawRect(w - 110, height - 75, w - 55, height - 35, new Color(235, 245, 250, hoveringLeftButton(cursorX, cursorY, width, height) ? 125 : 75));
@@ -85,7 +84,6 @@ public class RenderUtil extends GuiScreen
         /**
          * Right
          */
-        
         if (enabled)
         {
             drawRect(w + 55, height - 75, w + 110, height - 35, new Color(235, 245, 250, hoveringRightButton(cursorX, cursorY, width, height) ? 125 : 75));
